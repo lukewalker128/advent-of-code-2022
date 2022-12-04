@@ -14,3 +14,8 @@ fun readInput(name: String) = File("src", "$name.txt")
 fun String.md5() = BigInteger(1, MessageDigest.getInstance("MD5").digest(toByteArray()))
     .toString(16)
     .padStart(32, '0')
+
+/**
+ * Checks that expected is equal to actual.
+ */
+fun <T> checkEquals(expected: T, actual: T) = check(expected == actual) { "expected $expected, but was $actual"}
