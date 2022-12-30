@@ -1,7 +1,7 @@
 fun main() {
     val testInput = readInput("Day05_test")
     checkEquals("CMZ", part1(testInput))
-    checkEquals(0, part2(testInput))
+    checkEquals("MCD", part2(testInput))
 
     val input = readInput("Day05")
     println("Part 1: ${part1(input)}")
@@ -13,9 +13,26 @@ fun main() {
  * stack.
  */
 private fun part1(input: List<String>): String {
-    val partitionIndex = input.indexOfFirst { it.isBlank() }
-    val stackLines = input.slice(0 until partitionIndex)
-    val commandLines = input.slice(partitionIndex + 1 until input.size)
+    val (stacks, commands) = input.process()
+
+    // execute the list of commands
+    commands.forEach { command ->
+        val src = stacks[command.srcStack - 1]
+        val dest = stacks[command.destStack - 1]
+
+        require(command.numCrates <= src.size)
+        repeat(command.numCrates) {
+            dest.add(src.removeLast())
+        }
+    }
+
+    return stacks.map { it.last() }.joinToString(separator = "")
+}
+
+private fun List<String>.process(): Pair<List<MutableList<Char>>, List<Command>> {
+    val partitionIndex = indexOfFirst { it.isBlank() }
+    val stackLines = subList(0, partitionIndex)
+    val commandLines = subList(partitionIndex + 1, size)
 
     // determine the number of stacks
     val numStacks = stackLines.last().split(" ").last().toInt()
@@ -37,18 +54,7 @@ private fun part1(input: List<String>): String {
     // parse commands from the input
     val commands = commandLines.map { Command(it) }
 
-    // execute the list of commands
-    commands.forEach { command ->
-        val src = stacks[command.srcStack - 1]
-        val dest = stacks[command.destStack - 1]
-
-        require(command.numCrates <= src.size)
-        repeat(command.numCrates) {
-            dest.add(src.removeLast())
-        }
-    }
-
-    return stacks.map { it.last() }.joinToString(separator = "")
+    return Pair(stacks, commands)
 }
 
 private class Command(input: String) {
@@ -77,8 +83,24 @@ private class Command(input: String) {
 }
 
 /**
- * Do something else.
+ * Same as Part 1, but moves entire groups of crates instead of one at a time.
  */
-private fun part2(input: List<String>): Int {
-    return 0
+private fun part2(input: List<String>): String {
+    val (stacks, commands) = input.process()
+
+    commands.forEach { command ->
+        val src = stacks[command.srcStack - 1]
+        val dest = stacks[command.destStack - 1]
+
+        require(command.numCrates <= src.size)
+        // NOTE: slice is used here instead of subList since the latter has undefined behavior when structural changes
+        // are made to the base list.
+        dest.addAll(src.slice(src.size - command.numCrates .. src.lastIndex))
+
+        repeat(command.numCrates) {
+            src.removeLast()
+        }
+    }
+
+    return stacks.map { it.last() }.joinToString(separator = "")
 }
